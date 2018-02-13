@@ -10,20 +10,52 @@ namespace Readmeter
 {
     class Program
     {
+
         static void Main(string[] args)
         {
+            int interval = 10000;
+            string mqttIP = "192.168.1.11";
+            string meterIP = "192.168.1.10";
+
+            if (Environment.GetEnvironmentVariable("interval") == null) { Environment.SetEnvironmentVariable("interval", "10000"); };
+            if (Environment.GetEnvironmentVariable("mqttIP") == null) { Environment.SetEnvironmentVariable("mqttIP", "192.168.1.11"); };
+            if (Environment.GetEnvironmentVariable("meterIP") == null) { Environment.SetEnvironmentVariable("meterIP", "192.168.1.10"); };
+
+            try
+            {
+                interval = Convert.ToInt16(Environment.GetEnvironmentVariable("interval"));
+                mqttIP = Environment.GetEnvironmentVariable("mqttIP");
+                meterIP = Environment.GetEnvironmentVariable("meterIP");
+            }
+            catch
+            {
+                Console.WriteLine("Error retrieving enviroment variables");
+            }
+
+
+
 
             while (true)
             {
                 Console.WriteLine("Fething data from meter");
+
+                try
+                {
+                    ReadMeter(mqttIP, meterIP);
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine("Error: " + e);
+                }
                 
-                ReadMeter();
-                System.Threading.Thread.Sleep(10000);
+                System.Threading.Thread.Sleep(interval);
             }
         }
 
-        private static void ReadMeter() { 
-            MqttClient MQTTClient = new MqttClient(IPAddress.Parse("192.168.1.11"));
+        private static void ReadMeter(string mqttIP, string meterIP) {
+
+            MqttClient MQTTClient = new MqttClient(IPAddress.Parse(mqttIP));
+
             string clientId = Guid.NewGuid().ToString();
             MQTTClient.Connect(clientId);
 
@@ -31,12 +63,8 @@ namespace Readmeter
             string[] arrNames = new string[] { "Energy, Active import", "Power, Active", "Power, Active, L1", "Power, Active, L2", "Power, Active, L3", "Voltage, L1", "Voltage, L2", "Voltage, L3", "Current, L1", "Current, L2", "Current, L3", "Frequency", "Power factor" };
             string[] arrValues = new string[arrNames.Length] ;
 
-            using (var webClient = new WebClient())
-            {
+            context = new TimedWebClient { Timeout = 10000 }.DownloadString($"http://{meterIP}/static?path=/newsite/meterdata/");
 
-                //Get Webcontent from metter
-                context = webClient.DownloadString("http://192.168.1.10/static?path=/newsite/meterdata/");
-            }
             //Get values for each measure exept Power factor
             for (int i = 0; i < arrNames.Length - 1; i++)
             {
@@ -70,6 +98,28 @@ namespace Readmeter
                 int indexLength = text.IndexOf(delim, indexStart) - indexStart;
                 return text.Substring(indexStart, indexLength);
             }
+
+        }
+
+    }
+
+    public class TimedWebClient : WebClient
+    {
+        // Timeout in milliseconds, default = 600,000 msec
+        public int Timeout { get; set; }
+
+        public TimedWebClient()
+        {
+            this.Timeout = 600000;
+        }
+
+        protected override WebRequest GetWebRequest(Uri address)
+        {
+            var objWebRequest = base.GetWebRequest(address);
+            objWebRequest.Timeout = this.Timeout;
+            return objWebRequest;
         }
     }
+
+
 }
