@@ -1,0 +1,8 @@
+version: '3'
+
+services:
+  readmeter:
+    image: readmeter
+    build:
+      context: .
+      dockerfile: Readmeter/Dockerfile
