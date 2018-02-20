@@ -5,11 +5,20 @@ using System.Globalization;
 using System.Net;
 using System.Net.Http;
 using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
+
 
 namespace Readmeter
 {
     class Program
     {
+
+        Timer _tm = null;
+
+        AutoResetEvent _autoEvent = null;
+
+        private int _counter = 0;
 
         static void Main(string[] args)
         {
@@ -26,31 +35,29 @@ namespace Readmeter
                 interval = Convert.ToInt16(Environment.GetEnvironmentVariable("interval"));
                 mqttIP = Environment.GetEnvironmentVariable("mqttIP");
                 meterIP = Environment.GetEnvironmentVariable("meterIP");
+
+                Program p = new Program();
+                p.StartTimer();
             }
             catch
             {
                 Console.WriteLine("Error retrieving enviroment variables");
             }
-
-
-
-
-            while (true)
-            {
-                Console.WriteLine("Fething data from meter");
-
-                try
-                {
-                    ReadMeter(mqttIP, meterIP);
-                }
-                catch (Exception e)
-                {
-                    Console.WriteLine("Error: " + e);
-                }
-                
-                System.Threading.Thread.Sleep(interval);
-            }
         }
+
+        public void StartTimer()
+        {
+            _autoEvent = new AutoResetEvent(false);
+            _tm = new Timer(Execute, _autoEvent, 1000, Convert.ToInt16(Environment.GetEnvironmentVariable("interval")));
+            Console.Read();
+        }
+
+        public void Execute(Object stateInfo)
+        {
+            ReadMeter(Environment.GetEnvironmentVariable("mqttIP"), Environment.GetEnvironmentVariable("meterIP"));
+        }
+
+
 
         private static void ReadMeter(string mqttIP, string meterIP) {
 
