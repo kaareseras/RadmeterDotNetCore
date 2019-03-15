@@ -19,6 +19,42 @@ namespace Readmeter
         AutoResetEvent _autoEvent = null;
 
         private int _counter = 0;
+        
+        public class MeterReading{
+            public DateTime dateTime { get; set; }
+            public List<Reading> Readings { get; set; }
+        }
+
+        class Reading 
+	    {
+            void Reading (string Name, string ShortName, string Unit, float Value){
+                this.Name = Name;
+                this.ShortName = ShortName;
+                this.Unit = Unit;
+                this.Value = Value;
+            }
+            
+            public string Name { get; set; }
+            public string ShortName { get; set; }
+            public string Unit { get; set; }
+            public float Value { get; set; }
+	    }
+
+        public class MeterReading2{
+            public float Energy =new Reading("Energy, Active import","E",0);
+            public float Energy =new Reading("Power, Active",0);
+            public float Energy =new Reading("Power, Active, L1",0);
+            public float Energy =new Reading("Power, Active, L2",0);
+            public float Energy =new Reading("Power, Active, L3",0);
+            public float Energy =new Reading("Voltage, L1",0);
+            public float Energy =new Reading("Voltage, L2",0);
+            public float Energy =new Reading("Voltage, L3",0);
+            public float Energy =new Reading("Current, L1",0);
+            public float Energy =new Reading("Current, L2",0);
+            public float Energy =new Reading("Current, L3",0);
+            public float Energy =new Reading("Frequency",0);
+            public float Energy =new Reading("Power factor",0);
+        };
 
         static void Main(string[] args)
         {
@@ -61,6 +97,8 @@ namespace Readmeter
 
         private static void ReadMeter(string mqttIP, string meterIP) {
 
+            MeterReading meterReading = new MeterReading();
+
             MqttClient MQTTClient = new MqttClient(IPAddress.Parse(mqttIP));
 
             string clientId = Guid.NewGuid().ToString();
@@ -68,6 +106,9 @@ namespace Readmeter
 
             string context = "";
             string[] arrNames = new string[] { "Energy, Active import", "Power, Active", "Power, Active, L1", "Power, Active, L2", "Power, Active, L3", "Voltage, L1", "Voltage, L2", "Voltage, L3", "Current, L1", "Current, L2", "Current, L3", "Frequency", "Power factor" };
+            string[] arrShartNames = new string[] { "E", "P", "P1", "P2", "P3", "U1", "U2", "U3", "I1", "I2", "I3", "f", "cfi" };
+            string[] arrUnits = new string[] { "kWh", "W", "W", "W", "W", "V", "V", "V", "A", "A", "A", "Hz", ""  };
+
             string[] arrValues = new string[arrNames.Length] ;
 
             context = new TimedWebClient { Timeout = 10000 }.DownloadString($"http://{meterIP}/static?path=/newsite/meterdata/");
@@ -76,9 +117,18 @@ namespace Readmeter
             for (int i = 0; i < arrNames.Length - 1; i++)
             {
                 arrValues[i] = getValueByName(arrNames[i], context, ' ');
+
             }
             //Get values for Power factor
             arrValues[arrNames.Length - 1] = getValueByName(arrNames[arrNames.Length - 1], context, '<');
+            
+            //Write values into object
+            for (int i = 0; i < arrNames.Length - 1; i++)
+            {
+                Reading = new Reading(arrNames[i], arrShartNames[i], arrUnits[i],arrValues[i]);
+                MeterReading.Readings.Add(Reading);
+            }
+
 
             //Print out values
             for (int i = 0; i < arrNames.Length; i++)
