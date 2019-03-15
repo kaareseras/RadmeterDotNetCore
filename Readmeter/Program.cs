@@ -103,7 +103,15 @@ namespace Readmeter
 
             string[] arrValues = new string[arrNames.Length] ;
 
-            context = new TimedWebClient { Timeout = 10000 }.DownloadString($"http://{meterIP}/static?path=/newsite/meterdata/");
+            try
+            {
+                context = new TimedWebClient { Timeout = 10000 }.DownloadString($"http://{meterIP}/static?path=/newsite/meterdata/");
+            }
+            catch
+            {
+                Console.WriteLine("Error reading meter, skipping");
+                return;
+            }
 
             //Get values for each measure exept Power factor
             for (int i = 0; i < arrNames.Length - 1; i++)
