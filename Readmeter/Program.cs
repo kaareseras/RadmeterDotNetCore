@@ -1,12 +1,14 @@
 ﻿using M2Mqtt;
 using M2Mqtt.Messages;
 using System;
+using System.Collections.Generic;
 using System.Globalization;
 using System.Net;
 using System.Net.Http;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+
 
 
 namespace Readmeter
@@ -19,15 +21,20 @@ namespace Readmeter
         AutoResetEvent _autoEvent = null;
 
         private int _counter = 0;
-        
-        public class MeterReading{
-            public DateTime dateTime { get; set; }
+
+        public class MeterReading {
+            public DateTime TS { get; set; }
             public List<Reading> Readings { get; set; }
+
+            public MeterReading (){
+                TS = DateTime.Now;
+            }
         }
 
-        class Reading 
+        public class Reading 
 	    {
-            void Reading (string Name, string ShortName, string Unit, float Value){
+            public Reading (string Name, string ShortName, string Unit, float Value)
+            {
                 this.Name = Name;
                 this.ShortName = ShortName;
                 this.Unit = Unit;
@@ -39,22 +46,6 @@ namespace Readmeter
             public string Unit { get; set; }
             public float Value { get; set; }
 	    }
-
-        public class MeterReading2{
-            public float Energy =new Reading("Energy, Active import","E",0);
-            public float Energy =new Reading("Power, Active",0);
-            public float Energy =new Reading("Power, Active, L1",0);
-            public float Energy =new Reading("Power, Active, L2",0);
-            public float Energy =new Reading("Power, Active, L3",0);
-            public float Energy =new Reading("Voltage, L1",0);
-            public float Energy =new Reading("Voltage, L2",0);
-            public float Energy =new Reading("Voltage, L3",0);
-            public float Energy =new Reading("Current, L1",0);
-            public float Energy =new Reading("Current, L2",0);
-            public float Energy =new Reading("Current, L3",0);
-            public float Energy =new Reading("Frequency",0);
-            public float Energy =new Reading("Power factor",0);
-        };
 
         static void Main(string[] args)
         {
@@ -98,6 +89,7 @@ namespace Readmeter
         private static void ReadMeter(string mqttIP, string meterIP) {
 
             MeterReading meterReading = new MeterReading();
+            List<Reading> readings = new List<Reading>();
 
             MqttClient MQTTClient = new MqttClient(IPAddress.Parse(mqttIP));
 
@@ -123,24 +115,31 @@ namespace Readmeter
             arrValues[arrNames.Length - 1] = getValueByName(arrNames[arrNames.Length - 1], context, '<');
             
             //Write values into object
-            for (int i = 0; i < arrNames.Length - 1; i++)
+            for (int i = 0; i < arrNames.Length ; i++)
             {
-                Reading = new Reading(arrNames[i], arrShartNames[i], arrUnits[i],arrValues[i]);
-                MeterReading.Readings.Add(Reading);
+                Reading reading = new Reading(arrNames[i], arrShartNames[i], arrUnits[i], float.Parse(arrValues[i], CultureInfo.InvariantCulture.NumberFormat));
+                readings.Add(reading);
             }
 
+
+            meterReading.Readings = readings;
+
+            string strJson = Newtonsoft.Json.JsonConvert.SerializeObject(meterReading);
+            byte[] bytes = System.Text.Encoding.UTF8.GetBytes(strJson);
 
             //Print out values
-            for (int i = 0; i < arrNames.Length; i++)
-            {
-                Console.WriteLine(arrNames[i] + ": " + arrValues[i]);
-            }
+            Console.WriteLine(strJson);
+            //for (int i = 0; i < arrNames.Length; i++)
+            //{
+            //    Console.WriteLine(arrNames[i] + ": " + arrValues[i]);
+            //}
 
             //Send Values to MQTT broker
-            for (int i = 0; i < arrNames.Length; i++)
-            {
-                MQTTClient.Publish($"meter/{arrNames[i]}", Encoding.UTF8.GetBytes(arrValues[i]), MqttMsgBase.QOS_LEVEL_EXACTLY_ONCE, false);
-            }
+            MQTTClient.Publish($"meter/reading", bytes, MqttMsgBase.QOS_LEVEL_EXACTLY_ONCE, false);
+            //for (int i = 0; i < arrNames.Length; i++)
+            //{
+            //    MQTTClient.Publish($"meter/{arrNames[i]}", Encoding.UTF8.GetBytes(arrValues[i]), MqttMsgBase.QOS_LEVEL_EXACTLY_ONCE, false);
+            //}
 
             Console.WriteLine("Done!!");
 
