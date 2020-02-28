@@ -49,33 +49,33 @@ namespace Readmeter
 
         static void Main(string[] args)
         {
-            int interval = 10000;
+            int interval = 60000;
             string mqttIP = "192.168.1.11";
             string meterIP = "192.168.1.10";
 
-            if (Environment.GetEnvironmentVariable("interval") == null) { Environment.SetEnvironmentVariable("interval", "10000"); };
+            if (Environment.GetEnvironmentVariable("interval") == null) { Environment.SetEnvironmentVariable("interval", "60000"); };
             if (Environment.GetEnvironmentVariable("mqttIP") == null) { Environment.SetEnvironmentVariable("mqttIP", "192.168.1.11"); };
             if (Environment.GetEnvironmentVariable("meterIP") == null) { Environment.SetEnvironmentVariable("meterIP", "192.168.1.10"); };
 
             try
             {
-                interval = Convert.ToInt16(Environment.GetEnvironmentVariable("interval"));
+                interval = Convert.ToInt32(Environment.GetEnvironmentVariable("interval"));
                 mqttIP = Environment.GetEnvironmentVariable("mqttIP");
                 meterIP = Environment.GetEnvironmentVariable("meterIP");
 
                 Program p = new Program();
                 p.StartTimer();
             }
-            catch
+            catch (Exception e)
             {
-                Console.WriteLine("Error retrieving enviroment variables");
+                Console.WriteLine($"Error retrieving enviroment variables: '{e}'");
             }
         }
 
         public void StartTimer()
         {
             _autoEvent = new AutoResetEvent(false);
-            _tm = new Timer(Execute, _autoEvent, 1000, Convert.ToInt16(Environment.GetEnvironmentVariable("interval")));
+            _tm = new Timer(Execute, _autoEvent, 1000, Convert.ToInt32(Environment.GetEnvironmentVariable("interval")));
             Console.Read();
         }
 
@@ -136,7 +136,7 @@ namespace Readmeter
             byte[] bytes = System.Text.Encoding.UTF8.GetBytes(strJson);
 
             //Print out values
-            Console.WriteLine(strJson);
+            //Console.WriteLine(strJson);
             //for (int i = 0; i < arrNames.Length; i++)
             //{
             //    Console.WriteLine(arrNames[i] + ": " + arrValues[i]);
@@ -149,7 +149,9 @@ namespace Readmeter
             //    MQTTClient.Publish($"meter/{arrNames[i]}", Encoding.UTF8.GetBytes(arrValues[i]), MqttMsgBase.QOS_LEVEL_EXACTLY_ONCE, false);
             //}
 
-            Console.WriteLine("Done!!");
+            Console.Write("Done!! ");
+
+            Console.WriteLine(DateTime.Now.ToString());
 
 
             

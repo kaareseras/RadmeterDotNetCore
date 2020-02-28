@@ -1,8 +1,12 @@
-version: '3'
+version: '3.4'
 
 services:
   ci-build:
     image: microsoft/aspnetcore-build:1.0-2.0
+    environment:
+     - interval=20000
+     - mqttIP=192.168.1.11
+     - meterIP=192.168.1.10
     volumes:
       - .:/src
     working_dir: /src

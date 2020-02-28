@@ -1,4 +1,4 @@
-version: '3'
+version: '3.4'
 
 services:
   readmeter:
@@ -6,3 +6,7 @@ services:
     build:
       context: .
       dockerfile: Readmeter/Dockerfile
+    environment:
+     - interval=20000
+     - mqttIP=192.168.1.11
+     - meterIP=192.168.1.10

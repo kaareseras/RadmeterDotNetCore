@@ -1,0 +1,12 @@
+{
+  "profiles": {
+    "Readmeter": {
+      "commandName": "Project",
+      "environmentVariables": {
+        "interval": "60000",
+        "mqttIP": "192.168.1.11",
+        "meterIP": "192.168.1.10"
+      }
+    }
+  }
+}
