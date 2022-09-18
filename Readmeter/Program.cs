@@ -50,18 +50,24 @@ namespace Readmeter
         static void Main(string[] args)
         {
             int interval = 60000;
-            string mqttIP = "192.168.1.11";
+            string mqttIP = "192.168.1.2";
             string meterIP = "192.168.1.10";
+            string MQTT_User = "";
+            string MQTT_Pass = "";
 
             if (Environment.GetEnvironmentVariable("interval") == null) { Environment.SetEnvironmentVariable("interval", "60000"); };
             if (Environment.GetEnvironmentVariable("mqttIP") == null) { Environment.SetEnvironmentVariable("mqttIP", "192.168.1.11"); };
             if (Environment.GetEnvironmentVariable("meterIP") == null) { Environment.SetEnvironmentVariable("meterIP", "192.168.1.10"); };
+            if (Environment.GetEnvironmentVariable("MQTT_User") == null) { Environment.SetEnvironmentVariable("MQTT_User", ""); };
+            if (Environment.GetEnvironmentVariable("MQTT_Pass") == null) { Environment.SetEnvironmentVariable("MQTT_Pass", ""); };
 
             try
             {
                 interval = Convert.ToInt32(Environment.GetEnvironmentVariable("interval"));
                 mqttIP = Environment.GetEnvironmentVariable("mqttIP");
                 meterIP = Environment.GetEnvironmentVariable("meterIP");
+                MQTT_User = Environment.GetEnvironmentVariable("MQTT_User");
+                MQTT_Pass = Environment.GetEnvironmentVariable("MQTT_Pass");
 
                 Program p = new Program();
                 p.StartTimer();
@@ -81,12 +87,17 @@ namespace Readmeter
 
         public void Execute(Object stateInfo)
         {
-            ReadMeter(Environment.GetEnvironmentVariable("mqttIP"), Environment.GetEnvironmentVariable("meterIP"));
+            ReadMeter(
+                Environment.GetEnvironmentVariable("mqttIP"), 
+                Environment.GetEnvironmentVariable("meterIP"),
+                Environment.GetEnvironmentVariable("MQTT_User"),
+                Environment.GetEnvironmentVariable("MQTT_Pass")               
+            );
         }
 
 
 
-        private static void ReadMeter(string mqttIP, string meterIP) {
+        private static void ReadMeter(string mqttIP, string meterIP,string MQTT_User,string MQTT_Pass) {
 
             MeterReading meterReading = new MeterReading();
             List<Reading> readings = new List<Reading>();
@@ -94,7 +105,7 @@ namespace Readmeter
             MqttClient MQTTClient = new MqttClient(IPAddress.Parse(mqttIP));
 
             string clientId = Guid.NewGuid().ToString();
-            MQTTClient.Connect(clientId);
+            MQTTClient.Connect(clientId,MQTT_User,MQTT_Pass);
 
             string context = "";
             string[] arrNames = new string[] { "Energy, Active import", "Power, Active", "Power, Active, L1", "Power, Active, L2", "Power, Active, L3", "Voltage, L1", "Voltage, L2", "Voltage, L3", "Current, L1", "Current, L2", "Current, L3", "Frequency", "Power factor" };

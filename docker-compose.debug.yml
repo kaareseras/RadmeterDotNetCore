@@ -7,3 +7,5 @@ services:
     build:
       context: .
       dockerfile: Readmeter/Dockerfile
+    volumes:
+      - ~/.vsdbg:/remote_debugger:rw
